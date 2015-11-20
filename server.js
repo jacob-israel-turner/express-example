@@ -1,24 +1,36 @@
-var http = require('http');
+var express = require("express");
+var bodyParser = require('body-parser');
+var cors = require('cors');
 var stuff = require('node-day-one');
+var app = express();
 var resources = stuff.resources;
 var port = 9001;
 
-var server = http.createServer();
+/* CONTROLLERS */
+var guestListCtrl = require("./controllers/guest-list");
+var greetingCtrl = require("./controllers/greeting");
+var resourcesCtrl = require("./controllers/resources");
+var middleware = require('./controllers/middleware');
 
-var handleRequest = function(req, res){
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  if(req.method === 'GET'){
-    res.statusCode = 200;
-    res.end(JSON.stringify(resources));
-  }
-}
+/* MIDDLEWARE */
+app.use(middleware.requestLogger);
+app.post('*', middleware.jsonChecker);
+app.use(bodyParser.json());
+app.use(cors());
 
-server
-  .on('request', handleRequest)
-  .listen(port, function(e){
+/* RESOURCES */
+app.get('/resources', resourcesCtrl.get);
+
+/* GUEST LIST */
+app.get('/guest-list', guestListCtrl.get);
+app.post('/guest-list', guestListCtrl.post);
+app.put('/guest-list/:guestName', guestListCtrl.put);
+
+/* GREETING */
+app.get('/greeting', greetingCtrl.get);
+
+/* SERVER INITIALIZATION */
+app.listen(port, function(e){
     if(e) return console.error(e);
     console.log('Now listening on port:', port);
   });
